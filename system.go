@@ -123,7 +123,7 @@ func (s *Scheduler) SetGameSpeed(speed float64) {
 
 // Tells the scheduler to exit. Scheduler will finish executing its remaining tick before closing.
 func (s *Scheduler) SetQuit(value bool) {
-	s.quit.Store(true)
+	s.quit.Store(value)
 }
 
 // Returns the quit value of the scheduler
