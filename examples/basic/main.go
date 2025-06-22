@@ -84,9 +84,7 @@ func main() {
 	}
 
 	scheduler := ecs.NewScheduler(world)
-	scheduler.SetFixedTimeStep(time.Nanosecond * 100)
 	renderScheduler := ecs.NewScheduler(world)
-	renderScheduler.SetFixedTimeStep(time.Nanosecond * 100)
 
 	// Append physics systems, these run on a fixed time step, so dt will always be constant
 	scheduler.AddSystems(ecs.StageFixedUpdate,
@@ -117,16 +115,16 @@ func main() {
 	for {
 		start := time.Now()
 		worldUpdates = 1
-		time.Sleep(time.Microsecond * 5)
-		scheduler.PauseFixedUpdate(false)
-		time.Sleep(time.Microsecond * 5)
-		scheduler.PauseFixedUpdate(true)
-		time.Sleep(time.Microsecond * 5)
-		scheduler.PauseRender(false)
-		time.Sleep(time.Microsecond * 5)
-		scheduler.PauseRender(true)
-		time.Sleep(time.Microsecond * 5)
-		scheduler.PauseFixedUpdate(true)
+		// time.Sleep(time.Microsecond * 5)
+		// scheduler.PauseFixedUpdate(false)
+		// time.Sleep(time.Microsecond * 5)
+		// scheduler.PauseFixedUpdate(true)
+		// time.Sleep(time.Microsecond * 5)
+		// scheduler.PauseRender(false)
+		// time.Sleep(time.Microsecond * 5)
+		// scheduler.PauseRender(true)
+		// time.Sleep(time.Microsecond * 5)
+		// scheduler.PauseFixedUpdate(true)
 		elapsed := time.Since(start)
 		tickCount++
 		fmt.Println("Tick", tickCount, elapsed)

@@ -3,6 +3,7 @@ package ecs
 import (
 	"fmt"
 	"math"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -29,6 +30,7 @@ type World struct {
 	resources    map[reflect.Type]any
 	observers    *internalMap[EventId, list[Handler]] // TODO: SliceMap instead of map
 	cmd          *CommandQueue
+	UpdateMutex  sync.Mutex
 }
 
 // Creates a new world

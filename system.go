@@ -2,7 +2,6 @@ package ecs
 
 import (
 	"fmt"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -100,7 +99,6 @@ type Scheduler struct {
 	pauseFixedUpdate atomic.Bool
 	pauseRender      atomic.Bool
 	maxLoopCount     int
-	UpdateMutex      sync.Mutex
 }
 
 // Creates a scheduler
@@ -136,16 +134,16 @@ func (s *Scheduler) Quit() bool {
 
 // Pauses the set of fixed update systems (ie they will be skipped).
 func (s *Scheduler) PauseFixedUpdate(value bool) {
-	s.UpdateMutex.Lock()
-	defer s.UpdateMutex.Unlock()
+	s.world.UpdateMutex.Lock()
+	defer s.world.UpdateMutex.Unlock()
 	s.pauseFixedUpdate.Store(value)
 }
 
 // Pauses the set of render systems (ie they will be skipped).
 // Deprecated: This API is tentatitive
 func (s *Scheduler) PauseRender(value bool) {
-	s.UpdateMutex.Lock()
-	defer s.UpdateMutex.Unlock()
+	s.world.UpdateMutex.Lock()
+	defer s.world.UpdateMutex.Unlock()
 	s.pauseRender.Store(value)
 }
 
@@ -263,8 +261,8 @@ func (s *Scheduler) runStage(stage Stage, dt time.Duration) {
 
 // Performs a single step of the scheduler with the provided time
 func (s *Scheduler) Step(dt time.Duration) {
-	s.UpdateMutex.Lock()
-	defer s.UpdateMutex.Unlock()
+	s.world.UpdateMutex.Lock()
+	defer s.world.UpdateMutex.Unlock()
 
 	// Pre Update
 	s.runStage(StagePreUpdate, dt)
