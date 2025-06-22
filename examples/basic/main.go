@@ -84,7 +84,9 @@ func main() {
 	}
 
 	scheduler := ecs.NewScheduler(world)
+	scheduler.SetFixedTimeStep(time.Millisecond * 16)
 	renderScheduler := ecs.NewScheduler(world)
+	renderScheduler.SetFixedTimeStep(time.Millisecond * 1)
 
 	// Append physics systems, these run on a fixed time step, so dt will always be constant
 	scheduler.AddSystems(ecs.StageFixedUpdate,
@@ -98,6 +100,10 @@ func main() {
 		ecs.NewSystem1(MoveSystemOption_B),
 
 		ecs.NewSystem1(TriggerSystem),
+	)
+
+	scheduler.AddSystems(ecs.StageUpdate,
+		ecs.NewSystem1(PrintSystem),
 	)
 
 	renderScheduler.AddSystems(ecs.StageUpdate,
@@ -179,7 +185,7 @@ func MoveSystemOption_B(dt time.Duration, query *ecs.View2[Position, Velocity]) 
 // A system that prints all entity names and their positions
 func PrintSystem(dt time.Duration, query *ecs.View2[Name, Position]) {
 	query.MapId(func(id ecs.Id, name *Name, pos *Position) {
-		// fmt.Printf("%s: %v\n", *name, pos)
+		fmt.Printf("%s: %v\n", *name, pos)
 	})
 }
 
