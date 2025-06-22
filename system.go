@@ -2,6 +2,7 @@ package ecs
 
 import (
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -92,12 +93,14 @@ type Scheduler struct {
 	sysTimeFront, sysTimeBack         [][]SystemLog // Rotating log of how long each system takes
 	stageTimingFront, stageTimingBack []SystemLog   // Rotating log of how long each stage takes
 
-	fixedTimeStep time.Duration
-	accumulator   time.Duration
-	gameSpeed     float64
-	quit          atomic.Bool
-	pauseRender   atomic.Bool
-	maxLoopCount  int
+	fixedTimeStep    time.Duration
+	accumulator      time.Duration
+	gameSpeed        float64
+	quit             atomic.Bool
+	pauseFixedUpdate atomic.Bool
+	pauseRender      atomic.Bool
+	maxLoopCount     int
+	UpdateMutex      sync.Mutex
 }
 
 // Creates a scheduler
@@ -131,9 +134,18 @@ func (s *Scheduler) Quit() bool {
 	return s.quit.Load()
 }
 
+// Pauses the set of fixed update systems (ie they will be skipped).
+func (s *Scheduler) PauseFixedUpdate(value bool) {
+	s.UpdateMutex.Lock()
+	defer s.UpdateMutex.Unlock()
+	s.pauseFixedUpdate.Store(value)
+}
+
 // Pauses the set of render systems (ie they will be skipped).
 // Deprecated: This API is tentatitive
 func (s *Scheduler) PauseRender(value bool) {
+	s.UpdateMutex.Lock()
+	defer s.UpdateMutex.Unlock()
 	s.pauseRender.Store(value)
 }
 
@@ -251,6 +263,9 @@ func (s *Scheduler) runStage(stage Stage, dt time.Duration) {
 
 // Performs a single step of the scheduler with the provided time
 func (s *Scheduler) Step(dt time.Duration) {
+	s.UpdateMutex.Lock()
+	defer s.UpdateMutex.Unlock()
+
 	// Pre Update
 	s.runStage(StagePreUpdate, dt)
 
@@ -297,7 +312,10 @@ func (s *Scheduler) Run() {
 		frameStart = now
 
 		scaledDt := float64(dt.Nanoseconds()) * s.gameSpeed
-		s.accumulator += time.Duration(scaledDt)
+
+		if !s.pauseFixedUpdate.Load() {
+			s.accumulator += time.Duration(scaledDt)
+		}
 	}
 }
 

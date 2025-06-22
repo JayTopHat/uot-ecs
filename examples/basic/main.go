@@ -32,6 +32,7 @@ func (p PrintMessage) EventId() ecs.EventId {
 func main() {
 	// Create a New World
 	world := ecs.NewWorld()
+	worldUpdates := 1
 
 	// You can manually spawn entities like this
 	{
@@ -68,11 +69,12 @@ func main() {
 		// You can add observer handlers which run as a result of triggered events
 		world.AddObserver(
 			ecs.NewHandler(func(trigger ecs.Trigger[PrintMessage]) {
-				fmt.Println("Observer 1:", trigger.Data.Msg)
+				worldUpdates++
+				// fmt.Println("Observer 1:", trigger.Data.Msg)
 			}))
 		world.AddObserver(
 			ecs.NewHandler(func(trigger ecs.Trigger[PrintMessage]) {
-				fmt.Println("Observer 2!", trigger.Data.Msg)
+				// fmt.Println("Observer 2!", trigger.Data.Msg)
 			}))
 
 		cmd.Trigger(PrintMessage{"Hello"})
@@ -82,6 +84,7 @@ func main() {
 	}
 
 	scheduler := ecs.NewScheduler(world)
+	scheduler.SetFixedTimeStep(time.Nanosecond * 100)
 
 	// Append physics systems, these run on a fixed time step, so dt will always be constant
 	scheduler.AddSystems(ecs.StageFixedUpdate,
@@ -103,7 +106,30 @@ func main() {
 	// scheduler.AppendRender()
 
 	// This will block until the scheduler exits `scheduler.SetQuit(true)`
-	scheduler.Run()
+	go scheduler.Run()
+
+	tickCount := 0
+	for {
+		start := time.Now()
+		worldUpdates = 1
+		time.Sleep(time.Microsecond * 5)
+		scheduler.PauseFixedUpdate(false)
+		time.Sleep(time.Microsecond * 5)
+		scheduler.PauseFixedUpdate(true)
+		time.Sleep(time.Microsecond * 5)
+		scheduler.PauseRender(false)
+		time.Sleep(time.Microsecond * 5)
+		scheduler.PauseRender(true)
+		time.Sleep(time.Microsecond * 5)
+		scheduler.PauseFixedUpdate(true)
+		elapsed := time.Since(start)
+		tickCount++
+		fmt.Println("Tick", tickCount, elapsed)
+		fmt.Println("Time taken for tick", elapsed-time.Microsecond*25)
+		fmt.Println("World updates", worldUpdates)
+		fmt.Println("Time per update", (elapsed-time.Microsecond*25)/time.Duration(worldUpdates))
+
+	}
 }
 
 // Note: This system wasn't added to the scheduler, so that I wouldn't constantly spawn entities in the physics loop
@@ -150,7 +176,7 @@ func MoveSystemOption_B(dt time.Duration, query *ecs.View2[Position, Velocity]) 
 // A system that prints all entity names and their positions
 func PrintSystem(dt time.Duration, query *ecs.View2[Name, Position]) {
 	query.MapId(func(id ecs.Id, name *Name, pos *Position) {
-		fmt.Printf("%s: %v\n", *name, pos)
+		// fmt.Printf("%s: %v\n", *name, pos)
 	})
 }
 
