@@ -85,6 +85,8 @@ func main() {
 
 	scheduler := ecs.NewScheduler(world)
 	scheduler.SetFixedTimeStep(time.Nanosecond * 100)
+	renderScheduler := ecs.NewScheduler(world)
+	renderScheduler.SetFixedTimeStep(time.Nanosecond * 100)
 
 	// Append physics systems, these run on a fixed time step, so dt will always be constant
 	scheduler.AddSystems(ecs.StageFixedUpdate,
@@ -97,9 +99,11 @@ func main() {
 		// Option B: Use the dynamic injection to create a system for you
 		ecs.NewSystem1(MoveSystemOption_B),
 
-		ecs.NewSystem1(PrintSystem),
-
 		ecs.NewSystem1(TriggerSystem),
+	)
+
+	renderScheduler.AddSystems(ecs.StageUpdate,
+		ecs.NewSystem1(PrintSystem),
 	)
 
 	// Also, add render systems if you want, These run as fast as possible
@@ -107,6 +111,7 @@ func main() {
 
 	// This will block until the scheduler exits `scheduler.SetQuit(true)`
 	go scheduler.Run()
+	go renderScheduler.Run()
 
 	tickCount := 0
 	for {
